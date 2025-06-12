@@ -2,33 +2,43 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import platform
 
-# 한글 폰트 설정 (Streamlit Cloud에서는 한글 깨질 수 있어 로컬에서는 동작 확인 필요)
-plt.rcParams['font.family'] = 'Malgun Gothic'  # 윈도우
-# plt.rcParams['font.family'] = 'AppleGothic'  # Mac인 경우 주석 해제
+# 📌 한글 폰트 설정 (운영체제별 대응)
+if platform.system() == 'Windows':
+    plt.rcParams['font.family'] = 'Malgun Gothic'
+elif platform.system() == 'Darwin':  # Mac
+    plt.rcParams['font.family'] = 'AppleGothic'
+else:  # Linux or Streamlit Cloud
+    plt.rcParams['font.family'] = 'DejaVu Sans'
 
-# 제목
+plt.rcParams['axes.unicode_minus'] = False  # 마이너스 깨짐 방지
+
+# 📌 제목
 st.title("20~29세 성별 청년 실업률 분석 (2014~2024)")
 
-# 데이터 불러오기
-df = pd.read_csv("성_연령별_실업률.csv", encoding='cp949')
+# 📌 CSV 파일 읽기 (인코딩 오류 대비)
+try:
+    df = pd.read_csv("성_연령별_실업률.csv", encoding='cp949')
+except UnicodeDecodeError:
+    df = pd.read_csv("성_연령별_실업률.csv", encoding='utf-8')
 
-# 20~29세만 필터링
+# 📌 20~29세 필터링
 df_20s = df[df['연령계층별'] == '20 - 29세']
 
-# 원본 데이터 표시
+# 📌 원본 데이터 출력
 st.subheader("원본 데이터")
 st.dataframe(df_20s)
 
-# 연도 컬럼만 선택
+# 📌 연도 컬럼 리스트 추출
 year_columns = [str(year) for year in range(2014, 2025)]
 
-# 데이터 전처리: wide -> long
+# 📌 long-format 변환
 df_melted = df_20s.melt(id_vars=['성별'], value_vars=year_columns,
                         var_name='연도', value_name='실업률')
 df_melted['연도'] = df_melted['연도'].astype(int)
 
-# 시각화
+# 📌 시각화
 st.subheader("성별 실업률 변화 추이 (2014~2024)")
 
 fig, ax = plt.subplots(figsize=(10, 6))
@@ -38,3 +48,4 @@ ax.set_xlabel('연도')
 ax.set_ylabel('실업률 (%)')
 ax.grid(True)
 st.pyplot(fig)
+
